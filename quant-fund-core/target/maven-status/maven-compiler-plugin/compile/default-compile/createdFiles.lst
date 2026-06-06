@@ -1,0 +1,10 @@
+com\quantfund\core\strategy\Strategy.class
+com\quantfund\core\backtesting\BacktestEngine$TradeRecord.class
+com\quantfund\core\strategy\Strategy$StrategyContext.class
+com\quantfund\core\backtesting\BacktestEngine.class
+com\quantfund\core\backtesting\BacktestResult.class
+com\quantfund\core\strategy\Strategy$FundData.class
+com\quantfund\core\backtesting\PerformanceAnalyzer.class
+com\quantfund\core\strategy\Strategy$SignalType.class
+com\quantfund\core\backtesting\CommissionModel.class
+com\quantfund\core\strategy\Strategy$Signal.class

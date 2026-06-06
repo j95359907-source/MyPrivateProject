@@ -1,0 +1,12 @@
+com\quantfund\common\repository\FundRepository.class
+com\quantfund\common\entity\NavHistory.class
+com\quantfund\common\entity\Fund.class
+com\quantfund\common\enums\FundType.class
+com\quantfund\common\entity\Portfolio.class
+com\quantfund\common\entity\Trade.class
+com\quantfund\common\entity\ScreeningMetrics.class
+com\quantfund\common\enums\FundSubType.class
+com\quantfund\common\entity\BacktestRun.class
+com\quantfund\common\entity\Strategy.class
+com\quantfund\common\repository\NavHistoryRepository.class
+com\quantfund\common\repository\ScreeningMetricsRepository.class

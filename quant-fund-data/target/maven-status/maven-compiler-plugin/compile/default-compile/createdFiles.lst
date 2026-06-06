@@ -1,0 +1,5 @@
+com\quantfund\data\validator\DataValidator.class
+com\quantfund\data\collector\DataCollector.class
+com\quantfund\data\scheduler\DataSyncJob.class
+com\quantfund\data\collector\EastMoneyCollector.class
+com\quantfund\data\validator\ValidationResult.class
