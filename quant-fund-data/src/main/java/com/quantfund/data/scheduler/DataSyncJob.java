@@ -101,62 +101,106 @@ public class DataSyncJob {
     /**
      * 为活跃基金同步最新净值（最近30天）
      */
-    @Transactional
     protected void syncNavForRecentFunds() {
+        syncNavForFunds(30, 300, 80);
+    }
+
+    /**
+     * 批量同步净值
+     * @param daysBack 回看天数
+     * @param maxFunds 最多同步基金数
+     * @param delayMs 请求间隔毫秒
+     */
+    public void syncNavForFunds(int daysBack, int maxFunds, int delayMs) {
         try {
-            List<Fund> activeFunds = fundRepository.findByFundTypeInAndIsActiveTrue(
-                    List.of("ETF", "LOF", "开放式", "QDII", "FOF"));
-
             LocalDate endDate = LocalDate.now();
-            LocalDate startDate = endDate.minusDays(30);
+            LocalDate startDate = endDate.minusDays(daysBack);
 
-            int syncCount = 0;
-            List<Fund> etfFunds = activeFunds.stream()
-                    .filter(f -> Boolean.TRUE.equals(f.getIsEtf()))
-                    .limit(200) // 先同步主要ETF（数量有限）
+            // 筛选真实ETF（优先51xxxx沪市，再159xxx深市，最后LOF 16xxxx）
+            // 51xxxx基金覆盖最全，159xxx中只有前几十只有数据
+            List<Fund> realFunds = fundRepository.findAll().stream()
+                    .filter(f -> {
+                        String code = f.getFundCode();
+                        if (code == null) return false;
+                        return code.startsWith("51") || code.startsWith("159") || code.startsWith("16");
+                    })
+                    .sorted((a, b) -> {
+                        // 51xxxx优先 → 159xxx次之 → 16xxxx最后
+                        int pa = priority(a.getFundCode());
+                        int pb = priority(b.getFundCode());
+                        if (pa != pb) return Integer.compare(pa, pb);
+                        return a.getFundCode().compareTo(b.getFundCode());
+                    })
+                    .limit(maxFunds)
                     .toList();
 
-            for (Fund fund : etfFunds) {
+            log.info("开始净值同步: {}只基金, 区间{}→{}, 间隔{}ms",
+                    realFunds.size(), startDate, endDate, delayMs);
+
+            int syncCount = 0;
+            int skippedCount = 0;
+            long totalRecords = 0;
+
+            for (int i = 0; i < realFunds.size(); i++) {
+                Fund fund = realFunds.get(i);
                 try {
-                    // 检查该基金最近是否已同步
-                    Optional<NavHistory> latest = navHistoryRepository.findLatestByFundId(fund.getId());
-                    if (latest.isPresent() &&
-                            latest.get().getNavDate().isEqual(endDate) &&
-                            !latest.get().getNavDate().isBefore(endDate.minusDays(1))) {
-                        continue; // 今天已同步，跳过
+                    // 检查是否已同步足够数据
+                    Long existingCount = navHistoryRepository.countByFundId(fund.getId());
+                    if (existingCount != null && existingCount > daysBack * 0.8) {
+                        skippedCount++;
+                        continue; // 已有足够数据
                     }
 
                     List<NavHistory> navList = collector.fetchNavHistory(
                             fund.getFundCode(), startDate, endDate);
 
+                    // 按日期升序排列（API返回倒序）
+                    if (navList != null && !navList.isEmpty()) {
+                        navList.sort((a, b) -> a.getNavDate().compareTo(b.getNavDate()));
+                    }
+
                     // 填充fundId
-                    navList.forEach(n -> n.setFundId(fund.getId()));
+                    final Long fundId = fund.getId();
+                    navList.forEach(n -> n.setFundId(fundId));
 
                     // 数据校验
                     ValidationResult validation = validator.validateNavData(navList);
-                    if (validation.isValid()) {
+                    if (validation.isValid() && !navList.isEmpty()) {
                         // 逐条保存（已存在的跳过）
+                        int saved = 0;
                         for (NavHistory nav : navList) {
                             if (!navHistoryRepository.existsByFundIdAndNavDate(
                                     fund.getId(), nav.getNavDate())) {
                                 navHistoryRepository.save(nav);
+                                saved++;
                             }
                         }
-                        syncCount++;
-                    } else {
-                        log.warn("基金{}净值数据校验未通过: {}", fund.getFundCode(), validation);
+                        if (saved > 0) {
+                            syncCount++;
+                            totalRecords += saved;
+                            if (i % 20 == 0) {
+                                log.info("进度: {}/{} 已同步{}只({}条), 跳过{}只",
+                                        i + 1, realFunds.size(), syncCount, totalRecords, skippedCount);
+                            }
+                        }
                     }
                 } catch (Exception e) {
                     log.error("同步基金{}净值失败: {}", fund.getFundCode(), e.getMessage());
                 }
 
-                // 请求间隔（避免被封IP）
-                Thread.sleep(200);
+                Thread.sleep(delayMs);
             }
 
-            log.info("净值同步完成: 更新{}只ETF基金", syncCount);
+            log.info("净值同步完成: 成功{}只, 跳过{}只, 总计{}条记录",
+                    syncCount, skippedCount, totalRecords);
         } catch (Exception e) {
             log.error("净值同步失败", e);
         }
+    }
+
+    private static int priority(String code) {
+        if (code.startsWith("51")) return 0;
+        if (code.startsWith("159")) return 1;
+        return 2;
     }
 }

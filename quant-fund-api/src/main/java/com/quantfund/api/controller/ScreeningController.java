@@ -155,8 +155,9 @@ public class ScreeningController {
     public ResponseEntity<Map<String, String>> triggerRecalculation(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
-        metricsSyncService.fullRecalculation(from, to);
-        return ResponseEntity.ok(Map.of("status", "started", "from", from.toString(), "to", to.toString()));
+        // 直接调用每日计算——对当前日期计算指标
+        new Thread(() -> metricsSyncService.dailyMetricsCalculation()).start();
+        return ResponseEntity.ok(Map.of("status", "started", "desc", "正在计算今日指标"));
     }
 
     // ========== 辅助 ==========

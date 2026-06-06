@@ -274,7 +274,7 @@ public class EastMoneyCollector implements DataCollector {
                 }
 
                 // 判断是否还有更多页
-                int totalCount = data.get("TotalCount").asInt();
+                int totalCount = root.get("TotalCount") != null ? root.get("TotalCount").asInt() : 0;
                 hasMore = (pageIndex * 100) < totalCount;
                 pageIndex++;
 

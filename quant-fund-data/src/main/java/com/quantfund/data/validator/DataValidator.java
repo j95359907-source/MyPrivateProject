@@ -63,7 +63,7 @@ public class DataValidator {
 
             long daysBetween = ChronoUnit.DAYS.between(prev, curr);
             // 跳过周末（周五->周一 = 3天正常）
-            if (daysBetween > 5) {
+            if (daysBetween > 10) {
                 result.addWarning(String.format("日期间隔过大: %s 到 %s (%d天)", prev, curr, daysBetween));
             }
         }
