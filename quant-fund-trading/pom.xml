@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.quantfund</groupId>
+        <artifactId>china-quant-fund</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>quant-fund-trading</artifactId>
+    <name>Quant Fund Trading</name>
+    <description>交易执行模块：券商接口、订单管理、模拟交易、消息通知</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.quantfund</groupId>
+            <artifactId>quant-fund-common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.quantfund</groupId>
+            <artifactId>quant-fund-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>okhttp</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+    </dependencies>
+</project>
